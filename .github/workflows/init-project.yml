@@ -1,0 +1,106 @@
+name: Initialize Project
+
+on:
+  workflow_dispatch:
+    inputs:
+      group_id:
+        description: 'Maven Group ID (e.g., dev.ikm.snomed)'
+        required: true
+        default: 'dev.ikm'
+        type: string
+      artifact_id:
+        description: 'Maven Artifact ID (e.g., snomed-us-edition)'
+        required: true
+        type: string
+      version:
+        description: 'Initial Version'
+        required: true
+        default: '1.0.0-SNAPSHOT'
+        type: string
+      project_name:
+        description: 'Project Display Name (e.g., SNOMED CT US Edition)'
+        required: true
+        type: string
+
+jobs:
+  initialize:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Validate inputs
+        run: |
+          # Validate artifact_id: lowercase alphanumeric with hyphens
+          if [[ ! "${{ inputs.artifact_id }}" =~ ^[a-z][a-z0-9-]*$ ]]; then
+            echo "::error::Artifact ID must be lowercase alphanumeric with hyphens (e.g., snomed-us-edition)"
+            exit 1
+          fi
+          
+          # Validate group_id: lowercase with dots
+          if [[ ! "${{ inputs.group_id }}" =~ ^[a-z][a-z0-9.]*$ ]]; then
+            echo "::error::Group ID must be lowercase with dots (e.g., dev.ikm.snomed)"
+            exit 1
+          fi
+          
+          echo "✓ All inputs validated"
+      
+      - name: Replace placeholders in all files
+        run: |
+          # Find all text files and replace placeholders
+          find . -type f \( \
+            -name "*.xml" -o \
+            -name "*.md" -o \
+            -name "*.properties" -o \
+            -name "*.yml" -o \
+            -name "*.yaml" \
+          \) -not -path "./.git/*" | while read file; do
+            sed -i \
+              -e 's/TEMPLATE_GROUP_ID/${{ inputs.group_id }}/g' \
+              -e 's/TEMPLATE_ARTIFACT_ID/${{ inputs.artifact_id }}/g' \
+              -e 's/TEMPLATE_VERSION/${{ inputs.version }}/g' \
+              -e 's/TEMPLATE_PROJECT_NAME/${{ inputs.project_name }}/g' \
+              "$file"
+          done
+          
+          echo "✓ Replaced all placeholders"
+      
+      - name: Clean up template files
+        run: |
+          rm -f .github/workflows/init-project.yml
+          
+          echo "✓ Cleaned up template files"
+      
+      - name: Set up Java for validation
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+      
+      - name: Validate build
+        run: |
+          ./mvnw validate -q || echo "::warning::Maven validation had issues (parent POM may not be published yet)"
+      
+      - name: Commit initialized project
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Initialize ${{ inputs.artifact_id }} from IKE Knowledge Source template
+
+          Group ID: ${{ inputs.group_id }}
+          Artifact ID: ${{ inputs.artifact_id }}
+          Version: ${{ inputs.version }}
+          Project Name: ${{ inputs.project_name }}"
+          git push
+          
+          echo "✓ Project initialized successfully!"
+          echo ""
+          echo "Next steps:"
+          echo "  1. Clone the repository"
+          echo "  2. Download source files to the source/ directory"
+          echo "  3. Build: ./mvnw clean package"
+          echo "  4. Deploy: ./mvnw clean deploy"

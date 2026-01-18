@@ -1,0 +1,39 @@
+# Build outputs
+target/
+
+# IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Maven
+*.log
+dependency-reduced-pom.xml
+
+# Source files - NOT checked into git (too large)
+# These are downloaded locally and then packaged/deployed
+source/*
+!source/.gitkeep
+
+# Common knowledge source file types
+*.zip
+*.gz
+*.tar
+*.rf2
+*.owl
+*.ttl
+*.csv
+*.txt

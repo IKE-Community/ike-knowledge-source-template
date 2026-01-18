@@ -1,0 +1,13 @@
+# This file keeps the source directory in git.
+# Place your knowledge source files here (RF2, OWL, CSV, etc.)
+# These files are gitignored - they will not be checked into the repository.
+# 
+# To build and deploy:
+#   1. Download source files into this directory
+#   2. Run: ./mvnw clean deploy
+#   3. The source files will be zipped and deployed to the Maven repository
+#
+# To release:
+#   1. Start release: ./mvnw gitflow:release-start
+#   2. Verify build
+#   3. Finish release: ./mvnw gitflow:release-finish
